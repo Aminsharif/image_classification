@@ -14,7 +14,6 @@ from sklearn.metrics import accuracy_score
 project_dir = os.getcwd()
 folder = 'images'
 input_dir = os.path.join(project_dir, folder)
-print(project_dir)
 categories = ['empty', 'not_empty']
 
 data = []
@@ -25,8 +24,27 @@ for category_idx, category in enumerate(categories):
         img_path = os.path.join(input_dir, category, file)
         img = imread(img_path)
         img = resize(img, (15,15))
-        data.append(img)
+        data.append(img.flatten())
         labels.append(category_idx)
 
 data = np.asarray(data)
 labels = np.asarray(labels)
+
+X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.2, shuffle=True, stratify=labels)
+
+classifier = SVC()
+parameter = [{'gamma':[0.01, 0.001, 0.0001], 'C': [1, 10, 100, 1000]}]
+
+grid_search = GridSearchCV(classifier, parameter)
+
+grid_search.fit(X_train, y_train)
+
+best_estimator = grid_search.best_estimator_
+
+y_prediction = best_estimator.predict(X_test)
+
+score = accuracy_score(y_prediction, y_test)
+
+print('{}% of samples were correctly classicied'.format(str(score*100)))
+
+pickle.dump(best_estimator, open('./model.p', 'wb'))
